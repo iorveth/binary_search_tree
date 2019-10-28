@@ -1,122 +1,29 @@
-type Link<T> = Option<Box<Node<T>>>;
-
-#[derive(Debug)]
-struct Node<T: PartialOrd> {
-    value: T,
-    left: Link<T>,
-    right: Link<T>,
-    left_count: usize,
-}
-
-impl<T: PartialOrd> Node<T> {
-    fn create(value: T) -> Self {
-        Node {
-            value,
-            left: None,
-            right: None,
-            left_count: 0,
-        }
-    }
-
-    fn insert(&mut self, new_value: T) {
-        if self.find(&new_value) {
-            return;
-        } else {
-            match self {
-                Node { value, left, .. } if new_value < *value => {
-                    if let Some(left) = left {
-                        self.left_count += 1;
-                        left.insert(new_value)
-                    } else {
-                        self.left_count += 1;
-                        self.left = Some(Box::new(Node::create(new_value)))
-                    }
-                }
-                Node { value, right, .. } if new_value > *value => {
-                    if let Some(right) = right {
-                        right.insert(new_value)
-                    } else {
-                        self.right = Some(Box::new(Node::create(new_value)))
-                    }
-                }
-                _ => return,
-            }
-        }
-    }
-
-    fn find(&self, val: &T) -> bool {
-        match self {
-            Node { value, left, .. } if *val < *value => {
-                if let Some(left) = left {
-                    left.find(val)
-                } else {
-                    false
-                }
-            }
-            Node { value, right, .. } if *val > *value => {
-                if let Some(right) = right {
-                    right.find(val)
-                } else {
-                    false
-                }
-            }
-            Node { value, .. } if *val == *value => true,
-            _ => false,
-        }
-    }
-
-    fn find_max(&self) -> &T {
-        if let Some(ref right) = self.right {
-            right.find_max()
-        } else {
-            &self.value
-        }
-    }
-
-    fn find_n_max(&self, n: usize) -> Option<&T> {
-        match n {
-            n if n == self.left_count + 1 => Some(&self.value),
-            n if n > self.left_count => {
-                if let Some(ref right) = self.right {
-                    right.find_n_max(n - self.left_count - 1)
-                } else {
-                    None
-                }
-            }
-            _ => {
-                if let Some(ref left) = self.left {
-                    left.find_n_max(n)
-                } else {
-                    None
-                }
-            }
-        }
-    }
-}
+mod node;
+use node::*;
 
 #[derive(Debug)]
 struct BinaryTree<T: PartialOrd> {
     root: Link<T>,
 }
 
-struct NodeIterator<'a, T: PartialOrd> {
+struct BinaryTreeIterator<'a, T: PartialOrd> {
     counter: usize,
     root: &'a Link<T>,
 }
 
 impl<'a, T: PartialOrd> IntoIterator for &'a BinaryTree<T> {
     type Item = &'a T;
-    type IntoIter = NodeIterator<'a, T>;
+    type IntoIter = BinaryTreeIterator<'a, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        NodeIterator {
+        BinaryTreeIterator {
             counter: 1,
             root: &self.root,
         }
     }
 }
 
-impl<'a, T: PartialOrd> Iterator for NodeIterator<'a, T> {
+impl<'a, T: PartialOrd> Iterator for BinaryTreeIterator<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -163,6 +70,21 @@ impl<T: PartialOrd> BinaryTree<T> {
         match &self.root {
             Some(node) if n != 0 => node.find_n_max(n),
             _ => None,
+        }
+    }
+
+    pub fn delete_node(&mut self, value: T) {
+        match &mut self.root {
+            Some(node) if *node.get_value() == value => self.root = None,
+            Some(node) => {
+                if let Some(nodes_count) = node.get_nodes_count(&value) {
+                    println!("{:?}", nodes_count);
+                    node.delete_node(nodes_count, value)
+                } else {
+                    return;
+                }
+            }
+            _ => return,
         }
     }
 }
@@ -232,5 +154,26 @@ mod tests {
             counter += 1
         });
         assert_eq!(counter, tree.into_iter().count())
+    }
+
+    #[test]
+    fn test_delete_node() {
+        let mut tree = BinaryTree::new();
+        tree.insert(8);
+        tree.insert(5);
+        tree.insert(3);
+        tree.insert(2);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(7);
+        tree.insert(15);
+        tree.insert(12);
+        tree.insert(17);
+        tree.insert(10);
+        tree.insert(14);
+        assert_eq!(12, tree.into_iter().count());
+        tree.delete_node(3);
+        tree.delete_node(12);
+        assert_eq!(6, tree.into_iter().count());
     }
 }
