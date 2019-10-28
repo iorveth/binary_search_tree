@@ -19,45 +19,48 @@ impl<T: PartialOrd> Node<T> {
     }
 
     fn insert(&mut self, new_value: T) {
-        match self {
-            Node { value, left, .. } if new_value < *value => {
-                if let Some(left) = left {
-                    self.left_count += 1;
-                    left.insert(new_value)
-                } else {
-                    self.left_count += 1;
-                    self.left = Some(Box::new(Node::create(new_value)))
+        if self.find(&new_value) {
+            return;
+        } else {
+            match self {
+                Node { value, left, .. } if new_value < *value => {
+                    if let Some(left) = left {
+                        self.left_count += 1;
+                        left.insert(new_value)
+                    } else {
+                        self.left_count += 1;
+                        self.left = Some(Box::new(Node::create(new_value)))
+                    }
                 }
-            }
-            Node { value, right, .. } if new_value > *value => {
-                if let Some(right) = right {
-                    right.insert(new_value)
-                } else {
-                    self.right = Some(Box::new(Node::create(new_value)))
+                Node { value, right, .. } if new_value > *value => {
+                    if let Some(right) = right {
+                        right.insert(new_value)
+                    } else {
+                        self.right = Some(Box::new(Node::create(new_value)))
+                    }
                 }
+                _ => return,
             }
-            Node { value, .. } if new_value == *value => return,
-            _ => return,
         }
     }
 
-    fn find(&self, val: T) -> bool {
+    fn find(&self, val: &T) -> bool {
         match self {
-            Node { value, left, .. } if val < *value => {
+            Node { value, left, .. } if *val < *value => {
                 if let Some(left) = left {
                     left.find(val)
                 } else {
                     false
                 }
             }
-            Node { value, right, .. } if val > *value => {
+            Node { value, right, .. } if *val > *value => {
                 if let Some(right) = right {
                     right.find(val)
                 } else {
                     false
                 }
             }
-            Node { value, .. } if val == *value => true,
+            Node { value, .. } if *val == *value => true,
             _ => false,
         }
     }
@@ -144,7 +147,7 @@ impl<T: PartialOrd> BinaryTree<T> {
 
     pub fn find(&self, value: T) -> bool {
         match &self.root {
-            Some(node) => node.find(value),
+            Some(node) => node.find(&value),
             None => false,
         }
     }
