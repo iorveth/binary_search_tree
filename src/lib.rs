@@ -46,34 +46,37 @@ impl<'a, T: PartialOrd + Clone + std::fmt::Debug> Iterator for BinaryTreeIterato
 
 impl<T: PartialOrd + Clone> BinaryTree<T> {
     pub fn new() -> Self {
-        BinaryTree { root: None }
+        Self { root: None }
     }
 
     pub fn insert(&mut self, new_value: T) {
         match self.root {
             Some(ref mut node) => node.insert(new_value),
-            None => self.root = Some(Box::new(Node::create(new_value))),
+            None => self.root = Some(Box::new(Node::create_leaf(new_value))),
         }
     }
 
     pub fn find(&self, value: T) -> bool {
-        match &self.root {
-            Some(node) => node.find(&value),
-            None => false,
+        if let Some(node) = &self.root {
+            node.find(&value)
+        } else {
+            false
         }
     }
 
     pub fn find_min(&self) -> Option<&T> {
-        match &self.root {
-            Some(node) => Some(node.find_min()),
-            None => None,
+        if let Some(node) = &self.root {
+            Some(node.find_min())
+        } else {
+            None
         }
     }
 
     pub fn find_max(&self) -> Option<&T> {
-        match &self.root {
-            Some(node) => Some(node.find_max()),
-            None => None,
+        if let Some(node) = &self.root {
+            Some(node.find_max())
+        } else {
+            None
         }
     }
 
@@ -100,6 +103,24 @@ impl<T: PartialOrd + Clone> BinaryTree<T> {
             }
             _ => (),
         }
+    }
+
+    pub fn remove_node(&mut self, value: T) -> Self {
+        let node = match &mut self.root {
+            Some(node) if node.value == value => {
+                self.root = None;
+                None
+            }
+            Some(node) => {
+                if let Some(nodes_count) = node.get_nodes_count(&value) {
+                    node.remove_node(nodes_count, value)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+        Self { root: node }
     }
 
     pub fn delete(&mut self, val: T) {
@@ -272,5 +293,19 @@ mod tests {
         tree.insert(21);
         tree.insert(22);
         assert_eq!(5, tree.height());
+    }
+
+    #[test]
+    fn test_remove_node() {
+        let mut tree = BinaryTree::new();
+        tree.insert(7);
+        tree.insert(18);
+        tree.insert(4);
+        tree.insert(6);
+        tree.insert(3);
+        tree.insert(49);
+        tree.insert(25);
+        let node = tree.remove_node(4);
+        assert_eq!(3, node.into_iter().count());
     }
 }

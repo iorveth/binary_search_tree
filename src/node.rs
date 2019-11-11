@@ -29,7 +29,7 @@ pub struct NodeValuesIterator<'a, T: PartialOrd + Clone> {
 }
 
 impl<T: PartialOrd + Clone> Node<T> {
-    pub fn create(value: T) -> Self {
+    pub fn create_leaf(value: T) -> Self {
         Node {
             value,
             left: None,
@@ -66,14 +66,14 @@ impl<T: PartialOrd + Clone> Node<T> {
                     if let Some(left) = left {
                         left.insert(new_value)
                     } else {
-                        self.left = Some(Box::new(Node::create(new_value)))
+                        self.left = Some(Box::new(Node::create_leaf(new_value)))
                     }
                 }
                 Node { value, right, .. } if new_value > *value => {
                     if let Some(right) = right {
                         right.insert(new_value)
                     } else {
-                        self.right = Some(Box::new(Node::create(new_value)))
+                        self.right = Some(Box::new(Node::create_leaf(new_value)))
                     }
                 }
                 _ => return,
