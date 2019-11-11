@@ -126,6 +126,36 @@ impl<T: PartialOrd + Clone> Node<T> {
             _ => return,
         }
     }
+
+    pub fn remove_node(&mut self, nodes_count: usize, val: T) -> Link<T> {
+        match self {
+            Node {
+                value,
+                left: Some(left),
+                ..
+            } if val < *value => {
+                self.left_nodes_count -= nodes_count;
+                if val == left.value {
+                    self.left.take()
+                } else {
+                    left.remove_node(nodes_count, val)
+                }
+            }
+            Node {
+                value,
+                right: Some(right),
+                ..
+            } if val > *value => {
+                if val == right.value {
+                    self.right.take()
+                } else {
+                    right.remove_node(nodes_count, val)
+                }
+            }
+            _ => return None,
+        }
+    }
+
     pub fn delete_value(&mut self) {
         match (&mut self.right, &mut self.left) {
             (Some(right), _) => {
@@ -198,35 +228,6 @@ impl<T: PartialOrd + Clone> Node<T> {
                 }
             }
             _ => return,
-        }
-    }
-
-    pub fn remove_node(&mut self, nodes_count: usize, val: T) -> Link<T> {
-        match self {
-            Node {
-                value,
-                left: Some(left),
-                ..
-            } if val < *value => {
-                self.left_nodes_count -= nodes_count;
-                if val == left.value {
-                    self.left.take()
-                } else {
-                    left.remove_node(nodes_count, val)
-                }
-            }
-            Node {
-                value,
-                right: Some(right),
-                ..
-            } if val > *value => {
-                if val == right.value {
-                    self.right.take()
-                } else {
-                    right.remove_node(nodes_count, val)
-                }
-            }
-            _ => return None,
         }
     }
 
@@ -341,6 +342,23 @@ impl<T: PartialOrd + Clone> Node<T> {
                     None
                 }
             }
+        }
+    }
+
+    pub fn height(&self) -> usize {
+        match (&self.left, &self.right) {
+            (Some(left), Some(right)) => {
+                let lheight = left.height();
+                let rheight = right.height();
+                if lheight > rheight {
+                    lheight + 1
+                } else {
+                    rheight + 1
+                }
+            }
+            (Some(left), _) => (left.height() + 1),
+            (_, Some(right)) => (right.height() + 1),
+            (_, _) => 1,
         }
     }
 }

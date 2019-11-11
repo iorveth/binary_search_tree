@@ -96,11 +96,9 @@ impl<T: PartialOrd + Clone> BinaryTree<T> {
             Some(node) => {
                 if let Some(nodes_count) = node.get_nodes_count(&value) {
                     node.delete_node(nodes_count, value)
-                } else {
-                    return;
                 }
             }
-            _ => return,
+            _ => (),
         }
     }
 
@@ -121,6 +119,14 @@ impl<T: PartialOrd + Clone> BinaryTree<T> {
                 }
             }
             _ => return,
+        }
+    }
+
+    pub fn height(&self) -> usize {
+        if let Some(node) = &self.root {
+            node.height()
+        } else {
+            0
         }
     }
 }
@@ -252,5 +258,19 @@ mod tests {
         tree.delete(4);
         tree.delete(15);
         assert_eq!(5, tree.into_iter().count());
+    }
+
+    #[test]
+    fn test_height() {
+        let mut tree = BinaryTree::new();
+        assert_eq!(0, tree.height());
+        tree.insert(3);
+        tree.insert(2);
+        tree.insert(20);
+        tree.insert(7);
+        tree.insert(53);
+        tree.insert(21);
+        tree.insert(22);
+        assert_eq!(5, tree.height());
     }
 }
